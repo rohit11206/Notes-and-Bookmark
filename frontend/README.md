@@ -1,4 +1,11 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+This is the frontend for the Personal Notes & Bookmark Manager.
+
+## API URL
+
+The app calls the backend using `NEXT_PUBLIC_API_URL`. Production build uses the Render backend by default (see `.env.production`).
+
+- **Production:** `https://notes-and-bookmark.onrender.com/api`
+- **Local dev:** `http://localhost:4000/api` (or set `NEXT_PUBLIC_API_URL` in `.env.local` to point to Render)
 
 ## Getting Started
 

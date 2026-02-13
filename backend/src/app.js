@@ -5,6 +5,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const passport = require('./config/passport');
 
 const { connectDB } = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
@@ -49,6 +50,9 @@ app.use('/api', apiLimiter);
 
 // Body parsing
 app.use(express.json());
+
+// Initialize Passport
+app.use(passport.initialize());
 
 // Health check
 app.get('/health', (req, res) => {

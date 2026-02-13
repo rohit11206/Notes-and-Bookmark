@@ -1,6 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const passport = require('../config/passport');
 
 const User = require('../models/User');
 const { validateBody, registerSchema, loginSchema } = require('../utils/validation');
@@ -31,7 +32,7 @@ router.post('/register', validateBody(registerSchema), async (req, res, next) =>
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
-    const user = await User.create({ email, passwordHash, name });
+    const user = await User.create({ email, passwordHash, name, authProvider: 'local' });
 
     const token = createToken(user);
 
@@ -41,6 +42,7 @@ router.post('/register', validateBody(registerSchema), async (req, res, next) =>
         id: user._id,
         email: user.email,
         name: user.name,
+        picture: user.picture,
       },
     });
   } catch (err) {
@@ -58,6 +60,14 @@ router.post('/login', validateBody(loginSchema), async (req, res, next) => {
       return res.status(401).json({ error: 'Unauthorized', message: 'Invalid credentials' });
     }
 
+    // Check if user signed up with Google
+    if (user.authProvider === 'google') {
+      return res.status(401).json({ 
+        error: 'Unauthorized', 
+        message: 'This account uses Google Sign-In. Please use "Continue with Google"' 
+      });
+    }
+
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) {
       return res.status(401).json({ error: 'Unauthorized', message: 'Invalid credentials' });
@@ -71,12 +81,43 @@ router.post('/login', validateBody(loginSchema), async (req, res, next) => {
         id: user._id,
         email: user.email,
         name: user.name,
+        picture: user.picture,
       },
     });
   } catch (err) {
     return next(err);
   }
 });
+
+// Google OAuth - Initiate authentication
+router.get(
+  '/google',
+  passport.authenticate('google', {
+    scope: ['profile', 'email'],
+    session: false,
+  })
+);
+
+// Google OAuth - Callback
+router.get(
+  '/google/callback',
+  passport.authenticate('google', { 
+    session: false,
+    failureRedirect: process.env.FRONTEND_URL + '/login?error=auth_failed',
+  }),
+  (req, res) => {
+    try {
+      // Create JWT token for the user
+      const token = createToken(req.user);
+
+      // Redirect to frontend with token
+      const redirectUrl = `${process.env.FRONTEND_URL}/auth/callback?token=${token}`;
+      res.redirect(redirectUrl);
+    } catch (error) {
+      res.redirect(process.env.FRONTEND_URL + '/login?error=token_creation_failed');
+    }
+  }
+);
 
 module.exports = router;
 

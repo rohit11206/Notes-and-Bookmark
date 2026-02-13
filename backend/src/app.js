@@ -15,9 +15,11 @@ const { notFoundHandler, errorHandler } = require('./middleware/errorHandlers');
 
 const app = express();
 
+// ✅ ADD THIS LINE
+app.set('trust proxy', 1);
+
 // Connect to database
 connectDB().catch((err) => {
-  // eslint-disable-next-line no-console
   console.error('Failed to connect to database', err);
   process.exit(1);
 });
@@ -25,10 +27,10 @@ connectDB().catch((err) => {
 // Security middlewares
 app.use(helmet());
 
-// CORS - adjust origin as needed for frontend
+// CORS
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+    origin: process.env.CORS_ORIGIN,
     credentials: true,
   })
 );
@@ -40,7 +42,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 // Rate limiting
 const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000,
   max: 100,
   standardHeaders: true,
   legacyHeaders: false,
@@ -69,4 +71,3 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 
 module.exports = app;
-

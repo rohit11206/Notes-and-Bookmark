@@ -12,6 +12,8 @@ const createToken = (user) => {
   const payload = {
     sub: user._id.toString(),
     email: user.email,
+    name: user.name || null,
+    picture: user.picture || null,
   };
 
   return jwt.sign(payload, process.env.JWT_SECRET, {

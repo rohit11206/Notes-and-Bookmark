@@ -16,6 +16,33 @@ export default function BookmarksPage() {
   const [search, setSearch] = useState("");
   const [tagsFilter, setTagsFilter] = useState("");
   const [form, setForm] = useState({ id: null, url: "", title: "", description: "", tags: "", isFavorite: false });
+  const [fetchingTitle, setFetchingTitle] = useState(false);
+
+  const fetchTitleFromUrl = async () => {
+    const url = form.url?.trim();
+    if (!url) { setError("Enter a URL first."); return; }
+    const token = getToken();
+    if (!token) { setError("You must login first."); return; }
+    setError("");
+    setFetchingTitle(true);
+    try {
+      const res = await fetch(
+        `${API_BASE}/bookmarks/fetch-title?${new URLSearchParams({ url })}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.message || "Failed to fetch title");
+      if (data.title) {
+        setForm((prev) => ({ ...prev, title: data.title }));
+      } else {
+        setError("Could not fetch title from this URL.");
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setFetchingTitle(false);
+    }
+  };
 
   const loadBookmarks = async () => {
     const token = getToken();
@@ -106,7 +133,18 @@ export default function BookmarksPage() {
             <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <label className="block text-sm font-medium text-ink mb-1">URL *</label>
-                <input type="url" required value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} className="input" placeholder="https://example.com" />
+                <div className="flex gap-2">
+                  <input type="url" required value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} className="input flex-1" placeholder="https://example.com" />
+                  <button
+                    type="button"
+                    onClick={fetchTitleFromUrl}
+                    disabled={fetchingTitle || !form.url.trim()}
+                    className="whitespace-nowrap rounded-lg border-2 border-primary-500 bg-white px-3 py-2 text-sm font-semibold text-primary-600 hover:bg-primary-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {fetchingTitle ? "Fetching…" : "Fetch Title"}
+                  </button>
+                </div>
+                <p className="mt-1 text-xs text-stone-400">Paste a URL and click &quot;Fetch Title&quot; to auto-fill</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-ink mb-1">Title</label>

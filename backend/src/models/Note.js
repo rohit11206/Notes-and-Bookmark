@@ -28,6 +28,12 @@ const noteSchema = new mongoose.Schema(
       default: false,
       index: true,
     },
+    // Card background colour — one of: '', 'yellow', 'blue', 'green', 'pink', 'purple'
+    color: {
+      type: String,
+      default: '',
+      trim: true,
+    },
   },
   {
     timestamps: true,
@@ -35,4 +41,3 @@ const noteSchema = new mongoose.Schema(
 );
 
 module.exports = mongoose.model('Note', noteSchema);
-
